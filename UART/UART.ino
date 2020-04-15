@@ -2,8 +2,8 @@ enum State_enum {IDLES, START_BIT, REVERSE_DATA, PARITY_BIT, STOPT_BIT, SENDING,
 uint8_t state = IDLES;
 
 const int BaudRate = 9600;
-const byte RxPin = 0;
-const byte TxPin = 1;
+const byte RxPin = 2;
+const byte TxPin = 3;
 
 byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
 byte message[8];
@@ -15,13 +15,13 @@ void setup() {
   Serial.begin(9600);
   pinMode(TxPin, OUTPUT);
   pinMode(RxPin, INPUT);
-  Serial.println("START....");
 }
 
 void loop() {
   switch (state)
   {
     case IDLES:
+      digitalWrite(TxPin, HIGH);
       for ( int i = 0; Serial.available() > 0; i++)
       {
         byte incomingByte = Serial.read();
@@ -71,10 +71,10 @@ void loop() {
       break;
 
     case SENDING:
-      //      for (int i = 0; i <= 9; i++)
-      //      {
-      //        Serial.println(bufferbits[i]);
-      //      }
+      //            for (int i = 0; i <= 9; i++)
+      //            {
+      //              Serial.println(bufferbits[i]);
+      //            }
 
       SendData(bufferbits);
 
@@ -117,6 +117,4 @@ void SendData(byte input[])
     Serial.println(input[i]);
     delay(1000);
   }
-  Serial.println("END....");
-  Serial.println();
 }
