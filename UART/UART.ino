@@ -5,9 +5,11 @@ const int BaudRate = 9600;
 const byte RxPin = 2;
 const byte TxPin = 3;
 
-byte message[8] = {0b0, 0b1, 0b0, 0b0, 0b0, 0b0, 0b1, 0b0}; // B
-
+byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+byte message[8];
 byte bufferbits[10];
+
+bool received = false;
 
 void setup() {
   Serial.begin(9600);
@@ -19,7 +21,20 @@ void loop() {
   switch (state)
   {
     case IDLES:
-      state = START_BIT;
+      for ( int i = 0; Serial.available() > 0; i++)
+      {
+        byte incomingByte = Serial.read();
+        if (incomingByte != 10) {
+          bufer[i] = incomingByte;
+          received = true;
+          delay(100);
+        }
+      }
+      if (received)
+      {
+        state = START_BIT;
+        received = false;
+      }
       break;
 
     case START_BIT:
@@ -31,7 +46,10 @@ void loop() {
       break;
 
     case REVERSE_DATA:
-
+      for (int i = 0; i <= 8; i++)
+      {
+        message[i] = (bufer[0] >> i) & 0b1; //first byte in bufer only
+      }
       for (int i = 1; i <= 8; i++)
       {
         bufferbits[i] = message[i - 1];
@@ -52,7 +70,6 @@ void loop() {
       break;
 
     case SENDING:
-
       //      for (int i = 0; i <= 9; i++)
       //      {
       //        Serial.println(bufferbits[i]);
@@ -60,7 +77,8 @@ void loop() {
 
       SendData(bufferbits);
 
-      state = STOP;
+      byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+      state = IDLES;
 
       break;
 
