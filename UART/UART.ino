@@ -2,8 +2,8 @@ enum State_enum {IDLES, START_BIT, REVERSE_DATA, PARITY_BIT, STOPT_BIT, SENDING,
 uint8_t state = IDLES;
 
 const int BaudRate = 9600;
-const byte RxPin = 2;
-const byte TxPin = 3;
+const byte RxPin = 0;
+const byte TxPin = 1;
 
 byte message[8] = {0b0, 0b1, 0b0, 0b0, 0b0, 0b0, 0b1, 0b0}; // B
 
@@ -13,6 +13,7 @@ void setup() {
   Serial.begin(9600);
   pinMode(TxPin, OUTPUT);
   pinMode(RxPin, INPUT);
+  Serial.println("START....");
 }
 
 void loop() {
@@ -98,4 +99,6 @@ void SendData(byte input[])
     Serial.println(input[i]);
     delay(1000);
   }
+  Serial.println("END....");
+  Serial.println();
 }
