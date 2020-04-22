@@ -1,9 +1,9 @@
-enum State_enum {IDLES, START_BIT, REVERSE_DATA, PARITY_BIT, STOPT_BIT, SENDING, STOP};
+enum State_enum {IDLES, START_BIT, REVERSE_DATA, PARITY_BIT, STOPT_BIT, SENDING};
 uint8_t state = IDLES;
 
 const int BaudRate = 9600;
-const byte RxPin = 2;
-const byte TxPin = 3;
+const byte RxPin = 15;
+const byte TxPin = 2;
 
 byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
 byte message[8];
@@ -21,92 +21,69 @@ void loop() {
   switch (state)
   {
     case IDLES:
-      digitalWrite(TxPin, HIGH);
-      for ( int i = 0; Serial.available() > 0; i++)
-      {
-        byte incomingByte = Serial.read();
-        if (incomingByte != 10) {
-          bufer[i] = incomingByte;
-          received = true;
-          delay(100);
-        }
-      }
-      if (received)
-      {
-        state = START_BIT;
-        received = false;
-      }
+      CheckBuffer();
       break;
 
     case START_BIT:
-
-      bufferbits[0] = 0b0;
-
-
-      state = REVERSE_DATA;
+      AddStartBit();
       break;
 
     case REVERSE_DATA:
-      for (int i = 0; i <= 8; i++)
-      {
-        message[i] = (bufer[0] >> i) & 0b1; //first byte in bufer only
-      }
-      for (int i = 1; i <= 8; i++)
-      {
-        bufferbits[i] = message[i - 1];
-      }
-
-      state = STOPT_BIT;
+      ReverseData();
       break;
 
     case PARITY_BIT:
-
+      AddParityBit();
       break;
 
     case STOPT_BIT:
-
-      bufferbits[9] = 0b1;
-
-      state = SENDING;
+      AddStopBit();
       break;
 
     case SENDING:
-      //            for (int i = 0; i <= 9; i++)
-      //            {
-      //              Serial.println(bufferbits[i]);
-      //            }
-
       SendData(bufferbits);
-
-      byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
-      state = IDLES;
-
-      break;
-
-    case STOP:
-
+      ResetBuffer();
       break;
   }
 }
 
-void AddStartBit(byte data)
+void AddStartBit()
 {
+  bufferbits[0] = 0b0;
 
+  state = REVERSE_DATA;
 }
 
 void AddStopBit()
 {
+  bufferbits[9] = 0b1;
 
+  state = SENDING;
 }
 
 void AddParityBit()
 {
-
+  // not implemented
 }
 
 void ReverseData()
 {
+  for (int i = 0; i <= 8; i++)
+  {
+    message[i] = (bufer[0] >> i) & 0b1; //first byte in bufer only
+  }
+  for (int i = 1; i <= 8; i++)
+  {
+    bufferbits[i] = message[i - 1];
+  }
 
+  state = STOPT_BIT;
+}
+
+void ResetBuffer()
+{
+  byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+  state = IDLES;
 }
 
 void SendData(byte input[])
@@ -116,5 +93,24 @@ void SendData(byte input[])
     digitalWrite(TxPin, input[i]);
     Serial.println(input[i]);
     delay(1000);
+  }
+}
+
+void CheckBuffer()
+{
+  digitalWrite(TxPin, HIGH);
+  for ( int i = 0; Serial.available() > 0; i++)
+  {
+    byte incomingByte = Serial.read();
+    if (incomingByte != 10) {
+      bufer[i] = incomingByte;
+      received = true;
+      delay(100);
+    }
+  }
+  if (received)
+  {
+    state = START_BIT;
+    received = false;
   }
 }
