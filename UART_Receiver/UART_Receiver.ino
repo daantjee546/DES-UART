@@ -1,6 +1,7 @@
 enum State_enum {IDLES, RECORD_SAMPLES, SAMPLES_TO_BITS, RECOVER_DATA, CHECK_PARITY};
 uint8_t state = IDLES;
 
+// arduino uno
 const byte RxPin = 2;
 const byte TxPin = 3;
 

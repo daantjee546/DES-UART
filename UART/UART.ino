@@ -1,6 +1,7 @@
 enum State_enum {IDLES, START_BIT, REVERSE_DATA, PARITY_BIT, STOPT_BIT, SENDING};
 uint8_t state = IDLES;
 
+// ESP32
 const int BaudRate = 9600;
 const byte RxPin = 15;
 const byte TxPin = 2;
