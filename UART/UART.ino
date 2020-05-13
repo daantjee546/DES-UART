@@ -3,7 +3,7 @@ uint8_t state = IDLES;
 
 // ESP32
 const int BaudRate = 9600;
-const byte RxPin = 15;
+const byte RxPin = 15; //15
 const byte TxPin = 2;
 
 byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
@@ -12,24 +12,63 @@ byte bufferbits[10];
 
 bool received = false;
 
+int count = 0;
+
 void setup() {
   Serial.begin(9600);
   pinMode(TxPin, OUTPUT);
   pinMode(RxPin, INPUT);
+
+  cli();//stop interrupts
+
+  //set timer1 interrupt at 1Hz
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCCR1B = 0;// same for TCCR1B
+  TCNT1  = 0;//initialize counter value to 0
+  // set compare match register for 1hz increments
+  OCR1A = 15624 / 1667; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+  // turn on CTC mode
+  TCCR1B |= (1 << WGM12);
+  // Set CS12 and CS10 bits for 1024 prescaler
+  TCCR1B |= (1 << CS12) | (1 << CS10);
+  // enable timer compare interrupt
+  //  TIMSK1 |= (1 << OCIE1A);
+  TIMSK1 = 0;
+
+  sei();//allow interrupts
+}
+
+ISR(TIMER1_COMPA_vect) { //timer1 interrupt 1Hz toggles pin 13 (LED)
+  Serial.println("INTERRUPT");
+  Serial.println("");
+  if (count <= 9)
+  {
+    digitalWrite(TxPin, bufferbits[count]);
+    Serial.println(bufferbits[count]);
+    count++;
+  }
+  else
+  {
+    ResetBuffer();
+  }
 }
 
 void loop() {
   switch (state)
   {
     case IDLES:
+      //      cli();//stop interrupts
+      Serial.println("IDLES");
       CheckBuffer();
       break;
 
     case START_BIT:
+      Serial.println("START_BIT");
       AddStartBit();
       break;
 
     case REVERSE_DATA:
+      Serial.println("REVERSE_DATA");
       ReverseData();
       break;
 
@@ -38,12 +77,17 @@ void loop() {
       break;
 
     case STOPT_BIT:
+      Serial.println("STOPT_BIT");
       AddStopBit();
       break;
 
     case SENDING:
+
+      TIMSK1 |= (1 << OCIE1A);
+      Serial.println("SENDING");
       SendData(bufferbits);
-      ResetBuffer();
+      //      ResetBuffer();
+      //      TIMSK1 = 0;
       break;
   }
 }
@@ -83,18 +127,21 @@ void ReverseData()
 
 void ResetBuffer()
 {
+  TIMSK1 = 0;
   byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
   state = IDLES;
 }
 
 void SendData(byte input[])
 {
-  for (int i = 0; i <= 9; i++)
-  {
-    digitalWrite(TxPin, input[i]);
-    Serial.println(input[i]);
-    delay(1000);
-  }
+  //  sei();//allow interrupts
+
+  //  for (int i = 0; i <= 9; i++)
+  //  {
+  //    digitalWrite(TxPin, input[i]);
+  //    Serial.println(input[i]);
+  //    delay(1000);
+  //  }
 }
 
 void CheckBuffer()
@@ -114,4 +161,5 @@ void CheckBuffer()
     state = START_BIT;
     received = false;
   }
+
 }
