@@ -3,7 +3,7 @@ uint8_t state = IDLES;
 
 // ESP32
 const int BaudRate = 9600;
-const byte RxPin = 15; //15
+const byte RxPin = 3; //15
 const byte TxPin = 2;
 
 byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
@@ -39,8 +39,8 @@ void setup() {
 }
 
 ISR(TIMER1_COMPA_vect) { //timer1 interrupt 1Hz toggles pin 13 (LED)
-  Serial.println("INTERRUPT");
-  Serial.println("");
+//  Serial.println("INTERRUPT");
+//  Serial.println("");
   if (count <= 9)
   {
     digitalWrite(TxPin, bufferbits[count]);
@@ -58,17 +58,17 @@ void loop() {
   {
     case IDLES:
       //      cli();//stop interrupts
-      Serial.println("IDLES");
+//      Serial.println("IDLES");
       CheckBuffer();
       break;
 
     case START_BIT:
-      Serial.println("START_BIT");
+//      Serial.println("START_BIT");
       AddStartBit();
       break;
 
     case REVERSE_DATA:
-      Serial.println("REVERSE_DATA");
+//      Serial.println("REVERSE_DATA");
       ReverseData();
       break;
 
@@ -77,14 +77,14 @@ void loop() {
       break;
 
     case STOPT_BIT:
-      Serial.println("STOPT_BIT");
+//      Serial.println("STOPT_BIT");
       AddStopBit();
       break;
 
     case SENDING:
 
       TIMSK1 |= (1 << OCIE1A);
-      Serial.println("SENDING");
+//      Serial.println("SENDING");
       SendData(bufferbits);
       //      ResetBuffer();
       //      TIMSK1 = 0;
@@ -128,6 +128,7 @@ void ReverseData()
 void ResetBuffer()
 {
   TIMSK1 = 0;
+  count = 0;
   byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
   state = IDLES;
 }
