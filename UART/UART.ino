@@ -26,7 +26,7 @@ void setup() {
   TCCR1B = 0;// same for TCCR1B
   TCNT1  = 0;//initialize counter value to 0
   // set compare match register for 1hz increments
-  OCR1A = 15624 / 1667; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+  OCR1A = 15624 / 2132; // = (16*10^6) / (1*1024) - 1 (must be <65536)
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
   // Set CS12 and CS10 bits for 1024 prescaler
@@ -39,8 +39,8 @@ void setup() {
 }
 
 ISR(TIMER1_COMPA_vect) { //timer1 interrupt 1Hz toggles pin 13 (LED)
-//  Serial.println("INTERRUPT");
-//  Serial.println("");
+  //  Serial.println("INTERRUPT");
+  //  Serial.println("");
   if (count <= 9)
   {
     digitalWrite(TxPin, bufferbits[count]);
@@ -58,17 +58,18 @@ void loop() {
   {
     case IDLES:
       //      cli();//stop interrupts
-//      Serial.println("IDLES");
+      //      Serial.println("IDLES");
+      count = 0;
       CheckBuffer();
       break;
 
     case START_BIT:
-//      Serial.println("START_BIT");
+      //      Serial.println("START_BIT");
       AddStartBit();
       break;
 
     case REVERSE_DATA:
-//      Serial.println("REVERSE_DATA");
+      //      Serial.println("REVERSE_DATA");
       ReverseData();
       break;
 
@@ -77,14 +78,14 @@ void loop() {
       break;
 
     case STOPT_BIT:
-//      Serial.println("STOPT_BIT");
+      //      Serial.println("STOPT_BIT");
       AddStopBit();
       break;
 
     case SENDING:
 
       TIMSK1 |= (1 << OCIE1A);
-//      Serial.println("SENDING");
+      //      Serial.println("SENDING");
       SendData(bufferbits);
       //      ResetBuffer();
       //      TIMSK1 = 0;
@@ -128,8 +129,8 @@ void ReverseData()
 void ResetBuffer()
 {
   TIMSK1 = 0;
-  count = 0;
   byte bufer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+  delay(2500);
   state = IDLES;
 }
 

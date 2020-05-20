@@ -6,6 +6,12 @@ const byte RxPin = 2;
 const byte TxPin = 3;
 int count = 0;
 
+byte sampleOne[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+byte sampleTwo[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+byte sampleThree[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
+
+int currentSample = 1;
+
 byte messageBuffer[10] = {0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0};
 
 void setup() {
@@ -20,7 +26,7 @@ void setup() {
   TCCR1B = 0;// same for TCCR1B
   TCNT1  = 0;//initialize counter value to 0
   // set compare match register for 1hz increments
-  OCR1A = 15624 / 1667; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+  OCR1A = 15624 / (6396 ); // = (16*10^6) / (1*1024) - 1 (must be <65536)
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
   // Set CS12 and CS10 bits for 1024 prescaler
@@ -37,8 +43,45 @@ ISR(TIMER1_COMPA_vect) { //timer1 interrupt 1Hz toggles pin 13 (LED)
   //  Serial.println("");
   if (count <= 9)
   {
-    messageBuffer[count] = digitalRead(RxPin);
-    count++;
+    switch (currentSample)
+    {
+      case 1:
+        sampleOne[count] = digitalRead(RxPin);
+        currentSample++;
+        break;
+
+      case 2:
+        sampleTwo[count] = digitalRead(RxPin);
+        currentSample++;
+        break;
+
+      case 3:
+        sampleThree[count] = digitalRead(RxPin);
+        currentSample = 1;
+        count++;
+        break;
+
+      default:
+        break;
+    }
+
+//    if (currentSample == 1)
+//    {
+//      sampleOne[count] = digitalRead(RxPin);
+//      currentSample++;
+//    }
+//    else if (currentSample == 2)
+//    {
+//      sampleTwo[count] = digitalRead(RxPin);
+//      currentSample++;
+//    }
+//    else if (currentSample == 3)
+//    {
+//      sampleThree[count] = digitalRead(RxPin);
+//      currentSample = 1;
+//      count++;
+//    }
+    //    messageBuffer[count] = digitalRead(RxPin);
   }
   else
   {
@@ -80,22 +123,27 @@ void StartBitFound()
 
 void RecordData()
 {
-//  for (int i = 0; i <= 9; i++)
-//  {
-//    messageBuffer[i] = digitalRead(RxPin);
-//    delay(1000);
-//  }
-//  state = RECOVER_DATA;
+  //  for (int i = 0; i <= 9; i++)
+  //  {
+  //    messageBuffer[i] = digitalRead(RxPin);
+  //    delay(1000);
+  //  }
+  //  state = RECOVER_DATA;
 }
 
 void RecoverData()
 {
   Serial.println("DATA: ");
-  for (int i = 1; i <= 8; i++)
+  for (int i = 0; i <= 9; i++)
   {
-    Serial.print(messageBuffer[i]);
+    Serial.print(sampleOne[i]);
+    Serial.print(sampleTwo[i]);
+    Serial.print(sampleThree[i]);
+    Serial.println();
+    //    Serial.print(messageBuffer[i]);
     Serial.println();
   }
+  count = 0;
   state = IDLES;
 }
 
